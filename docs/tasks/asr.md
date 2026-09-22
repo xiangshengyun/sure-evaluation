@@ -24,6 +24,10 @@ specific non-default pipeline.
 | `asr.zh.cer.canonical_itn_zh_v1.token_cer_v1` | `zh` | `normalization/canonical_itn` -> `scoring/token_cer` | Canonical ITN CER; requires `[canonical]` |
 | `asr.ja.cer.funasr_itn_ja_v1.wenet_cer_v1` | `ja` | `normalization/funasr_itn` (`ja`) -> `scoring/wenet_cer` | Default Japanese CER; optional node setup required |
 | `asr.ko.cer.funasr_itn_ko_v1.wenet_cer_v1` | `ko` | `normalization/funasr_itn` (`ko`) -> `scoring/wenet_cer` | Default Korean CER; optional node setup required |
+| `asr.zh.cer.giga_norm_chn_v1.wenet_cer_v1` | `zh` | `normalization/giga_norm` (`CHN`) -> `scoring/wenet_cer` | GigaSpeechBench alternative; requires `[giga]` |
+| `asr.ja.cer.giga_norm_jpn_v1.wenet_cer_v1` | `ja` | `normalization/giga_norm` (`JPN`) -> `scoring/wenet_cer` | GigaSpeechBench alternative; requires `[giga]` |
+| `asr.ko.cer.giga_norm_kor_v1.wenet_cer_v1` | `ko` | `normalization/giga_norm` (`KOR`) -> `scoring/wenet_cer` | GigaSpeechBench alternative; requires `[giga]` |
+| `asr.th.cer.giga_norm_tha_v1.wenet_cer_v1` | `th` | `normalization/giga_norm` (`THA`) -> `scoring/wenet_cer` | GigaSpeechBench route; requires `[giga]` |
 | `asr.ar.cer.nemo_norm_ar_tn_v1.wenet_cer_v1` | `ar` | `normalization/nemo_norm` (`ar_tn`) -> `scoring/wenet_cer` | Default Arabic CER; optional node setup required |
 
 ### `wer`
@@ -41,6 +45,19 @@ specific non-default pipeline.
 | `asr.vi.wer.funasr_itn_vi_v1.wenet_wer_v1` | `vi` | `normalization/funasr_itn` (`vi`) -> `scoring/wenet_wer` | Default Vietnamese WER; optional node setup required |
 | `asr.id.wer.funasr_itn_id_v1.wenet_wer_v1` | `id` | `normalization/funasr_itn` (`id`) -> `scoring/wenet_wer` | Default Indonesian WER; optional node setup required |
 | `asr.tl.wer.funasr_itn_tl_v1.wenet_wer_v1` | `tl` | `normalization/funasr_itn` (`tl`) -> `scoring/wenet_wer` | Default Tagalog WER; optional node setup required |
+| `asr.en.wer.giga_norm_usa_v1.wenet_wer_v1` | `en` | `normalization/giga_norm` (`USA`) -> `scoring/wenet_wer` | GigaSpeechBench alternative; requires `[giga]` |
+| `asr.id.wer.giga_norm_idn_v1.wenet_wer_v1` | `id` | `normalization/giga_norm` (`IDN`) -> `scoring/wenet_wer` | GigaSpeechBench alternative; requires `[giga]` |
+| `asr.ms.wer.giga_norm_mys_v1.wenet_wer_v1` | `ms` | `normalization/giga_norm` (`MYS`) -> `scoring/wenet_wer` | GigaSpeechBench route; requires `[giga]` |
+| `asr.fil.wer.giga_norm_phl_v1.wenet_wer_v1` | `fil` | `normalization/giga_norm` (`PHL`) -> `scoring/wenet_wer` | GigaSpeechBench route; requires `[giga]` |
+| `asr.vi.wer.giga_norm_vnm_v1.wenet_wer_v1` | `vi` | `normalization/giga_norm` (`VNM`) -> `scoring/wenet_wer` | GigaSpeechBench alternative; requires `[giga]` |
+| `asr.ar.wer.giga_norm_ar_v1.wenet_wer_v1` | `ar` | `normalization/giga_norm` (`AR`) -> `scoring/wenet_wer` | GigaSpeechBench route; requires `[giga]` |
+| `asr.ar_ae.wer.giga_norm_are_v1.wenet_wer_v1` | `ar-ae` | `normalization/giga_norm` (`ARE`) -> `scoring/wenet_wer` | GigaSpeechBench route; requires `[giga]` |
+| `asr.ar_dz.wer.giga_norm_dza_v1.wenet_wer_v1` | `ar-dz` | `normalization/giga_norm` (`DZA`) -> `scoring/wenet_wer` | GigaSpeechBench route; requires `[giga]` |
+| `asr.ar_eg.wer.giga_norm_egy_v1.wenet_wer_v1` | `ar-eg` | `normalization/giga_norm` (`EGY`) -> `scoring/wenet_wer` | GigaSpeechBench route; requires `[giga]` |
+| `asr.ar_iq.wer.giga_norm_irq_v1.wenet_wer_v1` | `ar-iq` | `normalization/giga_norm` (`IRQ`) -> `scoring/wenet_wer` | GigaSpeechBench route; requires `[giga]` |
+| `asr.ar_ma.wer.giga_norm_mar_v1.wenet_wer_v1` | `ar-ma` | `normalization/giga_norm` (`MAR`) -> `scoring/wenet_wer` | GigaSpeechBench route; requires `[giga]` |
+| `asr.ar_sa.wer.giga_norm_sau_v1.wenet_wer_v1` | `ar-sa` | `normalization/giga_norm` (`SAU`) -> `scoring/wenet_wer` | GigaSpeechBench route; requires `[giga]` |
+| `asr.ar_sy.wer.giga_norm_syr_v1.wenet_wer_v1` | `ar-sy` | `normalization/giga_norm` (`SYR`) -> `scoring/wenet_wer` | GigaSpeechBench route; requires `[giga]` |
 
 ### `mer`
 
@@ -157,3 +174,14 @@ concatenation of 2-4 consecutive words on the other side is split
 
 Determinism requires an identical `cn2an` version; the engine version is
 recorded in the node trace.
+
+## GigaSpeechBench Normalization
+
+`normalization/giga_norm` vendors the text normalization published with
+[GigaSpeechBench](https://github.com/SpeechColab/GigaSpeechBench), pinned to
+upstream commit `ca782bf`. It is an explicit alternative for languages that
+already have a SURE-EVAL route, and the default route for the additional
+GigaSpeechBench language profiles. Install it with `pip install -e ".[giga]"`.
+
+The node README records the paper, upstream license, vendored revision, and
+reproduction notes: [giga_norm README](../../src/sure_eval/evaluation/nodes/normalization/giga_norm/README.md).

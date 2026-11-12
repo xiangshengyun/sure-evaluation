@@ -74,6 +74,30 @@ def test_sv_bundle_scores_testset_trials(tmp_path: Path) -> None:
     )
 
 
+def test_sv_cleans_work_dir_after_scoring(tmp_path: Path) -> None:
+    sample_output, manifest = _write_sv_fixture(tmp_path)
+    work_dir = tmp_path / "work"
+    evaluate_sv_files(str(sample_output), str(manifest), work_dir=work_dir)
+    # An open memmap keeps its file locked on Windows, so a leaked mapping
+    # makes the pipeline's temporary-directory cleanup fail.
+    assert list(work_dir.iterdir()) == []
+
+
+def test_sv_cleans_work_dir_when_metric_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    sample_output, manifest = _write_sv_fixture(tmp_path)
+    work_dir = tmp_path / "work"
+
+    def _fail(scores: object, labels: object) -> None:
+        raise RuntimeError("sv scoring failed")
+
+    monkeypatch.setattr("sure_eval.evaluation.tasks.sv.pipeline.score_eer", _fail)
+    with pytest.raises(RuntimeError, match="sv scoring failed"):
+        evaluate_sv_files(str(sample_output), str(manifest), metrics=("eer",), work_dir=work_dir)
+    assert list(work_dir.iterdir()) == []
+
+
 def test_sv_atomic_pipeline_identity(tmp_path: Path) -> None:
     sample_output, manifest = _write_sv_fixture(tmp_path)
     report = evaluate_sv_files(

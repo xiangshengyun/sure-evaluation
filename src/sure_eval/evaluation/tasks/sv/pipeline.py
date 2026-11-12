@@ -61,15 +61,24 @@ def evaluate_sv_files(
         )
         scores = artifacts.scores()
         labels = artifacts.labels()
-        results: dict[str, dict[str, object]] = {}
-        trace = [cosine_result]
-        for metric in requested_metrics:
-            if metric == "eer":
-                result = score_eer(scores, labels)
-            else:
-                result = score_min_dcf(scores, labels)
-            trace.append(result)
-            results[metric] = dict(result.details["result"])
+        try:
+            results: dict[str, dict[str, object]] = {}
+            trace = [cosine_result]
+            for metric in requested_metrics:
+                if metric == "eer":
+                    result = score_eer(scores, labels)
+                else:
+                    result = score_min_dcf(scores, labels)
+                trace.append(result)
+                results[metric] = dict(result.details["result"])
+        finally:
+            # Release the trial mappings before the temporary directory is
+            # removed: an open mapping keeps the files locked on Windows, and an
+            # exception traceback can still reference the arrays.
+            _release_trial_memmap(scores)
+            _release_trial_memmap(labels)
+            del labels
+            del scores
 
     member_pipeline_ids = tuple(_atomic_pipeline_id(metric) for metric in requested_metrics)
     if len(requested_metrics) == 1:
@@ -113,6 +122,14 @@ def evaluate_sv_files(
             "input_files": input_files.as_dict(),
         },
     )
+
+
+def _release_trial_memmap(array: object) -> None:
+    """Close the mapping behind a memmap so its file can be removed on Windows."""
+
+    mapping = getattr(array, "_mmap", None)
+    if mapping is not None:
+        mapping.close()
 
 
 def _normalize_metric(metric: str) -> str:

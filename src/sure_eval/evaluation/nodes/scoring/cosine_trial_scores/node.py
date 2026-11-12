@@ -103,74 +103,88 @@ def score_cosine_trials(
     key_to_index, dimension = _scan_embedding_file(output_path)
     embedding_count = len(key_to_index)
     embeddings_path = work_path / "embeddings.float32.mmap"
+    scores_path = work_path / "trial_scores.float32.mmap"
+    labels_path = work_path / "trial_labels.uint8.mmap"
     embeddings = np.memmap(
         embeddings_path,
         dtype=np.float32,
         mode="w+",
         shape=(embedding_count, dimension),
     )
-    for key, vector in _iter_embedding_rows(output_path):
-        index = key_to_index[key]
-        norm = float(np.linalg.norm(vector))
-        if norm == 0.0:
-            raise ValueError(f"SV embedding for {key!r} has zero norm")
-        embeddings[index] = vector / norm
-    embeddings.flush()
+    try:
+        for key, vector in _iter_embedding_rows(output_path):
+            index = key_to_index[key]
+            norm = float(np.linalg.norm(vector))
+            if norm == 0.0:
+                raise ValueError(f"SV embedding for {key!r} has zero norm")
+            embeddings[index] = vector / norm
+        embeddings.flush()
 
-    if manifest.trial_count <= 0:
-        raise ValueError("SV trial manifest must declare a positive trial_count")
-    scores_path = work_path / "trial_scores.float32.mmap"
-    labels_path = work_path / "trial_labels.uint8.mmap"
-    scores = np.memmap(scores_path, dtype=np.float32, mode="w+", shape=(manifest.trial_count,))
-    labels = np.memmap(labels_path, dtype=np.uint8, mode="w+", shape=(manifest.trial_count,))
-    used_embedding_indexes: set[int] = set()
-    missing_keys: set[str] = set()
-    target_count = 0
-    nontarget_count = 0
-    trial_count = 0
-    for trial_count, (enroll_key, test_key, label, _) in enumerate(
-        _iter_trial_rows(manifest.trials_path), start=1
-    ):
-        if trial_count > manifest.trial_count:
-            raise ValueError(
-                f"SV trial file has more rows than manifest trial_count={manifest.trial_count}"
-            )
-        enroll_index = key_to_index.get(enroll_key)
-        test_index = key_to_index.get(test_key)
-        if enroll_index is None:
-            missing_keys.add(enroll_key)
-        if test_index is None:
-            missing_keys.add(test_key)
-        if missing_keys:
-            if len(missing_keys) >= 20:
-                break
-            continue
-        used_embedding_indexes.add(enroll_index)
-        used_embedding_indexes.add(test_index)
-        row_index = trial_count - 1
-        scores[row_index] = np.float32(np.dot(embeddings[enroll_index], embeddings[test_index]))
-        labels[row_index] = LABEL_VALUES[label]
-        if label == "target":
-            target_count += 1
-        else:
-            nontarget_count += 1
-    if missing_keys:
-        preview = ", ".join(sorted(missing_keys)[:20])
-        raise ValueError(f"SV sample output is missing required embedding key(s): {preview}")
-    if trial_count != manifest.trial_count:
-        raise ValueError(
-            f"SV trial count mismatch: manifest={manifest.trial_count}, actual={trial_count}"
-        )
-    if target_count != manifest.target_count or nontarget_count != manifest.nontarget_count:
-        raise ValueError(
-            "SV trial label counts do not match the manifest: "
-            f"target={target_count}/{manifest.target_count}, "
-            f"nontarget={nontarget_count}/{manifest.nontarget_count}"
-        )
-    scores.flush()
-    labels.flush()
-    del embeddings
-    embeddings_path.unlink(missing_ok=True)
+        if manifest.trial_count <= 0:
+            raise ValueError("SV trial manifest must declare a positive trial_count")
+        scores = np.memmap(scores_path, dtype=np.float32, mode="w+", shape=(manifest.trial_count,))
+        labels = np.memmap(labels_path, dtype=np.uint8, mode="w+", shape=(manifest.trial_count,))
+        try:
+            used_embedding_indexes: set[int] = set()
+            missing_keys: set[str] = set()
+            target_count = 0
+            nontarget_count = 0
+            trial_count = 0
+            for trial_count, (enroll_key, test_key, label, _) in enumerate(
+                _iter_trial_rows(manifest.trials_path), start=1
+            ):
+                if trial_count > manifest.trial_count:
+                    raise ValueError(
+                        "SV trial file has more rows than manifest "
+                        f"trial_count={manifest.trial_count}"
+                    )
+                enroll_index = key_to_index.get(enroll_key)
+                test_index = key_to_index.get(test_key)
+                if enroll_index is None:
+                    missing_keys.add(enroll_key)
+                if test_index is None:
+                    missing_keys.add(test_key)
+                if missing_keys:
+                    if len(missing_keys) >= 20:
+                        break
+                    continue
+                used_embedding_indexes.add(enroll_index)
+                used_embedding_indexes.add(test_index)
+                row_index = trial_count - 1
+                scores[row_index] = np.float32(
+                    np.dot(embeddings[enroll_index], embeddings[test_index])
+                )
+                labels[row_index] = LABEL_VALUES[label]
+                if label == "target":
+                    target_count += 1
+                else:
+                    nontarget_count += 1
+            if missing_keys:
+                preview = ", ".join(sorted(missing_keys)[:20])
+                raise ValueError(
+                    f"SV sample output is missing required embedding key(s): {preview}"
+                )
+            if trial_count != manifest.trial_count:
+                raise ValueError(
+                    f"SV trial count mismatch: manifest={manifest.trial_count}, "
+                    f"actual={trial_count}"
+                )
+            if target_count != manifest.target_count or nontarget_count != manifest.nontarget_count:
+                raise ValueError(
+                    "SV trial label counts do not match the manifest: "
+                    f"target={target_count}/{manifest.target_count}, "
+                    f"nontarget={nontarget_count}/{manifest.nontarget_count}"
+                )
+            scores.flush()
+            labels.flush()
+        finally:
+            # Release the trial mappings before the caller removes the
+            # temporary directory: an open mapping keeps files locked on Windows.
+            del labels
+            del scores
+    finally:
+        del embeddings
+        embeddings_path.unlink(missing_ok=True)
 
     artifacts = SVScoreArtifacts(
         scores_path=scores_path,

@@ -19,6 +19,7 @@ _TASK_MODULES = {
     "gr": "sure_eval.evaluation.scripts.classification",
     "slu": "sure_eval.evaluation.scripts.slu",
     "sd": "sure_eval.evaluation.scripts.sd",
+    "ear1": "sure_eval.evaluation.scripts.ear1",
     "sa_asr": "sure_eval.evaluation.scripts.sa_asr",
     "se": "sure_eval.evaluation.scripts.se",
     "speech_enhancement": "sure_eval.evaluation.scripts.se",

@@ -187,6 +187,7 @@ node-local 虚拟环境只保留在本地，不会进入安装包或 Git。
 | ASR | WER、CER、MER | [ASR](docs/tasks/asr.md) |
 | S2TT | BLEU、BLEU-char、chrF、XCOMET-XL、BLEURT-20 | [S2TT](docs/tasks/s2tt.md) |
 | SD | DER | [SD](docs/tasks/sd.md) |
+| EAR-1 | ESD-ON DER、ESR-ON cpCER | [EAR-1](docs/tasks/ear1.md) |
 | SV | EER、minDCF | [SV](docs/tasks/sv.md) |
 | SA-ASR | cpWER，DER 伴随结果 | [SA-ASR](docs/tasks/sa_asr.md) |
 | TTS | CER、WER、说话人相似度、DNSMOS、WV-MOS、UTMOS、KOMOS（韩语） | [TTS](docs/tasks/tts.md) |

@@ -1,0 +1,51 @@
+task: EAR1
+language_sensitive: false
+routes:
+  -
+    task_alias: ear1
+    ear_task: ESD-ON
+    track: D1
+    metric: der
+    pipeline_id: ear1.esd.d1.der.ear1_openbench_v1
+    nodes:
+      - scoring/ear1_openbench
+    input_contract: ear1/esd
+    executor: sure_eval.evaluation.tasks.ear1.pipeline.evaluate_ear1_files
+    params:
+      distance_backend: builtin
+  -
+    task_alias: ear1
+    ear_task: ESD-ON
+    track: R1
+    metric: der
+    pipeline_id: ear1.esd.r1.der.ear1_openbench_v1
+    nodes:
+      - scoring/ear1_openbench
+    input_contract: ear1/esd
+    executor: sure_eval.evaluation.tasks.ear1.pipeline.evaluate_ear1_files
+    params:
+      distance_backend: builtin
+  -
+    task_alias: ear1
+    ear_task: ESR-ON
+    track: D1
+    metric: cpcer
+    pipeline_id: ear1.esr.d1.cpcer.ear1_openbench_v1
+    nodes:
+      - scoring/ear1_openbench
+    input_contract: ear1/esr
+    executor: sure_eval.evaluation.tasks.ear1.pipeline.evaluate_ear1_files
+    params:
+      distance_backend: builtin
+  -
+    task_alias: ear1
+    ear_task: ESR-ON
+    track: R1
+    metric: cpcer
+    pipeline_id: ear1.esr.r1.cpcer.ear1_openbench_v1
+    nodes:
+      - scoring/ear1_openbench
+    input_contract: ear1/esr
+    executor: sure_eval.evaluation.tasks.ear1.pipeline.evaluate_ear1_files
+    params:
+      distance_backend: builtin

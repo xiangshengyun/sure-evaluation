@@ -28,6 +28,8 @@ ROLE_TO_CLI_ARG = {
     "wekws_frame_score_file": "wekws_frame_score_file",
     "keyword": "keyword",
     "samples_jsonl": "samples_jsonl",
+    "submission": "submission",
+    "reference_dir": "reference_dir",
 }
 
 TASK_ALIASES = {
@@ -57,6 +59,7 @@ def build_pipeline_spec(
     language: str | None = None,
     metric: str | None = None,
     pipeline_id: str | None = None,
+    track: str | None = None,
     output_path: Path | None = None,
 ) -> dict[str, Any]:
     """Describe a configured script route as a user-editable pipeline spec."""
@@ -70,6 +73,7 @@ def build_pipeline_spec(
         language=language,
         metric=metric,
         pipeline_id=pipeline_id,
+        track=track,
     )
     description = describe_pipeline(normalized_task, **describe_kwargs)
     routes, _ = load_task_routes(TASK_ALIASES.get(normalized_task, normalized_task))
@@ -86,6 +90,12 @@ def build_pipeline_spec(
     if normalized_task == "kws":
         run_args.update(target_fa_per_hour=0.1, include_roc=False, match_tolerance_sec=1.0)
     run_args["output_dir"] = None
+    if normalized_task == "ear1":
+        selected_route = selected_routes[0] if selected_routes else {}
+        run_args["track"] = track or selected_route.get("track")
+        run_args["distance_backend"] = (selected_route.get("params") or {}).get(
+            "distance_backend", "builtin"
+        )
 
     if "scoring/llm_judge" in description.node_ids:
         run_args["llm_config"] = None
@@ -102,6 +112,7 @@ def build_pipeline_spec(
         "task_alias": task,
         "language": description.language,
         "metric": description.metric,
+        "track": track or (selected_routes[0].get("track") if selected_routes else None),
         "requested_metric": execution_metrics[0] if len(execution_metrics) == 1 else None,
         "metrics": list(execution_metrics),
         "pipeline_id": description.pipeline_id,
@@ -132,6 +143,7 @@ def list_metric_routes(
     *,
     language: str | None = None,
     metric: str | None = None,
+    track: str | None = None,
 ) -> dict[str, Any]:
     """List exact atomic routes registered for one task selection."""
 
@@ -165,6 +177,8 @@ def list_metric_routes(
             continue
         if not _route_matches_language(route, requested_language):
             continue
+        if track and str(route.get("track") or "").upper() != track.upper():
+            continue
         pipeline_id = str(route["pipeline_id"]).format(language=route_language)
         matched.append((route, pipeline_id))
 
@@ -189,11 +203,12 @@ def list_metric_routes(
     )
     entries: list[dict[str, Any]] = []
     for route, pipeline_id in matched:
-        spec = build_pipeline_spec(task, pipeline_id=pipeline_id)
+        spec = build_pipeline_spec(task, pipeline_id=pipeline_id, track=track)
         default_pipeline_id = task_default_pipeline_id or _default_pipeline_id(
             task,
             language=str(spec.get("language") or "n/a"),
             metric=str(spec["metric"]),
+            track=spec.get("track"),
         )
         environments = _declared_route_environments(spec["computation_node_ids"])
         entries.append(
@@ -202,6 +217,7 @@ def list_metric_routes(
                 "pipeline_id": pipeline_id,
                 "language": spec["language"],
                 "metric": spec["metric"],
+                "track": spec.get("track"),
                 "execution_metrics": list(spec["metrics"]),
                 "computation_node_ids": list(spec["computation_node_ids"]),
                 "required_roles": list(spec["required_roles"]),
@@ -340,9 +356,13 @@ def _concrete_route_language(
     return "n/a"
 
 
-def _default_pipeline_id(task: str, *, language: str, metric: str) -> str:
+def _default_pipeline_id(
+    task: str, *, language: str, metric: str, track: str | None = None
+) -> str:
     try:
-        return str(build_pipeline_spec(task, language=language, metric=metric)["pipeline_id"])
+        return str(
+            build_pipeline_spec(task, language=language, metric=metric, track=track)["pipeline_id"]
+        )
     except (KeyError, TypeError, ValueError):
         return ""
 
@@ -398,6 +418,10 @@ def run_pipeline_spec(
     output_dir: str,
     ref_file: str | None = None,
     hyp_file: str | None = None,
+    submission: str | None = None,
+    reference_dir: str | None = None,
+    track: str | None = None,
+    distance_backend: str | None = None,
     src_file: str | None = None,
     prompt_jsonl: str | None = None,
     label_spec: str | None = None,
@@ -438,6 +462,10 @@ def run_pipeline_spec(
     cli_values = {
         "ref_file": ref_file,
         "hyp_file": hyp_file,
+        "submission": submission,
+        "reference_dir": reference_dir,
+        "track": track,
+        "distance_backend": distance_backend,
         "src_file": src_file,
         "prompt_jsonl": prompt_jsonl,
         "label_spec": label_spec,
@@ -464,11 +492,19 @@ def run_pipeline_spec(
             "prediction_activity_policy",
         ):
             cli_values.pop(key, None)
+    if task != "ear1":
+        for key in ("submission", "reference_dir", "track", "distance_backend"):
+            cli_values.pop(key, None)
     kwargs.update({key: value for key, value in cli_values.items() if value is not None})
     if task == "kws":
         for key, value in {"target_fa_per_hour": target_fa_per_hour,
                            "include_roc": include_roc,
                            "match_tolerance_sec": match_tolerance_sec}.items():
+            if value is not None:
+                kwargs[key] = value
+    if task == "ear1":
+        for key in ("track", "distance_backend"):
+            value = cli_values.get(key)
             if value is not None:
                 kwargs[key] = value
     uses_audio_samples = task in AUDIO_SAMPLE_TASKS or "samples_jsonl" in (
@@ -575,6 +611,7 @@ def _describe_kwargs(
     language: str | None,
     metric: str | None,
     pipeline_id: str | None,
+    track: str | None = None,
 ) -> dict[str, Any]:
     if task == "asr":
         kwargs: dict[str, Any] = {}
@@ -625,6 +662,13 @@ def _describe_kwargs(
         return kwargs
     if task == "sd":
         kwargs = {"metric": metric or "der"}
+        if pipeline_id:
+            kwargs["pipeline_id"] = pipeline_id
+        return kwargs
+    if task == "ear1":
+        kwargs = {"metric": metric or "der"}
+        if track:
+            kwargs["track"] = track
         if pipeline_id:
             kwargs["pipeline_id"] = pipeline_id
         return kwargs
@@ -696,6 +740,7 @@ def _route_choices(routes: dict[str, Any], *, language: str | None = None) -> li
                 ),
                 "language": route.get("language"),
                 "metric": route.get("metric"),
+                "track": route.get("track"),
                 "nodes": list(route.get("nodes") or ()),
                 "computation_node_ids": list(
                     route.get("computation_nodes") or route.get("nodes") or ()
@@ -857,6 +902,13 @@ def _run_kwargs_from_pipeline(pipeline: dict[str, Any]) -> dict[str, Any]:
     if task == "kws":
         for key in ("target_fa_per_hour", "include_roc", "match_tolerance_sec"):
             value = (pipeline.get("run_args") or {}).get(key)
+            if value is not None:
+                kwargs[key] = value
+    elif task == "ear1":
+        for key in ("track", "distance_backend"):
+            value = (pipeline.get("run_args") or {}).get(key)
+            if value is None and key == "track":
+                value = pipeline.get("track")
             if value is not None:
                 kwargs[key] = value
     return kwargs

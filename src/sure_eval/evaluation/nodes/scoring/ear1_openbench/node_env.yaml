@@ -1,0 +1,9 @@
+id: scoring/ear1_openbench
+group: ear1
+runtime:
+  type: in_process
+  python: ">=3.10"
+  optional: false
+verify:
+  imports: []
+  files: []

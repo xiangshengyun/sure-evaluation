@@ -1,0 +1,29 @@
+task: EAR1
+language_sensitive: false
+canonical_entry: sure_eval.evaluation.tasks.ear1.pipeline.evaluate_ear1_files
+default_metric: der
+input_contracts:
+  ear1/esd:
+    purpose: ear1_esd_on_der
+    required_roles: [submission, reference_dir]
+    row_format: ear1_submission_zip_and_reference_directory
+    alignment_key: session_id
+    aggregation: pooled_error_seconds_over_reference_speaker_seconds
+    main_report: true
+    supported_input_formats:
+      - ZIP containing submission.rttm and optional empty_sessions.txt
+      - organizer reference directory with sessions.json and reference.rttm
+  ear1/esr:
+    purpose: ear1_esr_on_cpcer
+    required_roles: [submission, reference_dir]
+    row_format: ear1_submission_zip_and_reference_directory
+    alignment_key: session_id
+    aggregation: pooled_character_errors_over_reference_characters
+    main_report: true
+    supported_input_formats:
+      - ZIP containing one <session_id>.stm per session
+      - organizer reference directory with sessions.json and per-session STM
+notes:
+  - EAR-1 references are organizer-private and are never copied into a submission.
+  - ESD-ON reports zero-collar overlap-inclusive pooled DER.
+  - ESR-ON reports character-level cpCER after EAR-1 normalization and speaker matching.

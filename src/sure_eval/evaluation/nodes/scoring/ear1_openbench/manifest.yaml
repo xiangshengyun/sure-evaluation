@@ -1,0 +1,24 @@
+id: scoring/ear1_openbench
+version: v1
+stage: scoring
+language_sensitive: false
+input_schema: ear1_submission_zip_and_reference_directory
+output_schema: ear1_metric_report
+implementation: sure_eval.evaluation.nodes.scoring.ear1_openbench.scorer
+backend:
+  library: ear1_openbench
+metrics:
+  - der
+  - cpcer
+hyperparameters:
+  distance_backend:
+    type: enum
+    values: [builtin, agwer]
+internal_stages:
+  - submission_validation
+  - reference_validation
+  - metric_scoring
+  - pooled_aggregation
+notes:
+  - Builtin cpCER uses a self-contained exact alignment implementation.
+  - agwer is optional and must use the pinned fast-scoring profile from the EAR-1 package.

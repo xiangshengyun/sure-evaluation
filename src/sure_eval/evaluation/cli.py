@@ -52,6 +52,7 @@ def describe_metric_pipeline(
     ),
     language: Optional[str] = typer.Option(None, "--language", "-l", help="Task language/profile"),
     metric: Optional[str] = typer.Option(None, "--metric", "-m", help="Metric name"),
+    track: Optional[str] = typer.Option(None, "--track", help="EAR-1 microphone track (D1 or R1)"),
     metrics: Optional[str] = typer.Option(
         None, "--metrics", help="Comma-separated metric names for multi-metric tasks"
     ),
@@ -74,6 +75,7 @@ def describe_metric_pipeline(
             language=language,
             metric=selected_metric,
             pipeline_id=pipeline_id,
+            track=track,
             output_path=output,
         )
     except Exception as exc:
@@ -103,12 +105,13 @@ def list_routes(
     task: str = typer.Argument(..., help="Task name, e.g. asr, lid, tts, kws, classification"),
     language: Optional[str] = typer.Option(None, "--language", "-l", help="Task language/profile"),
     metric: Optional[str] = typer.Option(None, "--metric", "-m", help="Canonical metric name"),
+    track: Optional[str] = typer.Option(None, "--track", help="EAR-1 microphone track (D1 or R1)"),
     json_output: bool = typer.Option(False, "--json", help="Print machine-readable JSON"),
 ) -> None:
     """List exact registered pipeline IDs without loading metric runtimes."""
 
     try:
-        payload = list_metric_routes(task, language=language, metric=metric)
+        payload = list_metric_routes(task, language=language, metric=metric, track=track)
     except Exception as exc:
         _print_error(exc, json_output=json_output)
         raise typer.Exit(1) from exc
@@ -144,6 +147,10 @@ def run_metric_pipeline(
     output_dir: Path = typer.Option(..., "--output-dir", help="Expected output directory"),
     ref_file: Optional[str] = typer.Option(None, "--ref-file", help="Reference key-text file"),
     hyp_file: Optional[str] = typer.Option(None, "--hyp-file", help="Hypothesis key-text file"),
+    submission: Optional[str] = typer.Option(None, "--submission", help="EAR-1 submission ZIP"),
+    reference_dir: Optional[str] = typer.Option(None, "--reference-dir", help="EAR-1 private reference directory"),
+    track: Optional[str] = typer.Option(None, "--track", help="EAR-1 microphone track (D1 or R1)"),
+    distance_backend: Optional[str] = typer.Option(None, "--distance-backend", help="EAR-1 cpCER backend: builtin or agwer"),
     src_file: Optional[str] = typer.Option(None, "--src-file", help="Source key-text file"),
     prompt_jsonl: Optional[str] = typer.Option(
         None, "--prompt-jsonl", help="SLU prompt JSONL file"
@@ -222,6 +229,10 @@ def run_metric_pipeline(
             output_dir=str(output_dir),
             ref_file=ref_file,
             hyp_file=hyp_file,
+            submission=submission,
+            reference_dir=reference_dir,
+            track=track,
+            distance_backend=distance_backend,
             src_file=src_file,
             prompt_jsonl=prompt_jsonl,
             label_spec=label_spec,

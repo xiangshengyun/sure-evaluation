@@ -140,7 +140,7 @@ class SOTAManager:
         percentages. BLEU-style scores are already on a 0-100 scale.
         """
         metric_name = metric.lower()
-        rate_metrics = {"wer", "cer", "mer", "der", "cpwer"}
+        rate_metrics = {"wer", "cer", "mer", "der", "cpwer", "cpcer"}
         fraction_accuracy_metrics = {"accuracy"}
 
         if metric_name in rate_metrics:

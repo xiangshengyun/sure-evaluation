@@ -1,0 +1,7 @@
+{
+  "track": "D1",
+  "sessions": {
+    "EVAL001": {"duration_s": 9, "uem": [[0, 7], [8, 9]]},
+    "EVAL002": {"duration_s": 3}
+  }
+}

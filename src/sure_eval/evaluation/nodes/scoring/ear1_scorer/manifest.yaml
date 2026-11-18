@@ -1,0 +1,24 @@
+id: scoring/ear1_scorer
+version: v1
+stage: scoring
+language_sensitive: false
+input_schema: seglst
+output_schema: ear1_metric_report
+implementation: sure_eval.evaluation.nodes.scoring.ear1_scorer.node
+backend:
+  library: ear1_metrics
+  scorer_version: openbench-integration-0.1
+metrics:
+  - der
+  - cpcer
+hyperparameters:
+  distance_backend:
+    type: enum
+    values: [builtin, agwer]
+internal_stages:
+  - metric_scoring
+  - pooled_aggregation
+notes:
+  - metrics.py is the organizer ear1_metrics.py; scoring logic is unchanged.
+  - builtin computes exact character edit distance in Python; speaker matching uses SciPy.
+  - agwer is optional and needs the organizer requirements-scoring-fast.txt.

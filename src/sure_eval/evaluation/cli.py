@@ -144,6 +144,9 @@ def run_metric_pipeline(
     output_dir: Path = typer.Option(..., "--output-dir", help="Expected output directory"),
     ref_file: Optional[str] = typer.Option(None, "--ref-file", help="Reference key-text file"),
     hyp_file: Optional[str] = typer.Option(None, "--hyp-file", help="Hypothesis key-text file"),
+    sessions_file: Optional[str] = typer.Option(
+        None, "--sessions-file", help="Session metadata JSON (EAR-1 sessions.json)"
+    ),
     src_file: Optional[str] = typer.Option(None, "--src-file", help="Source key-text file"),
     prompt_jsonl: Optional[str] = typer.Option(
         None, "--prompt-jsonl", help="SLU prompt JSONL file"
@@ -222,6 +225,7 @@ def run_metric_pipeline(
             output_dir=str(output_dir),
             ref_file=ref_file,
             hyp_file=hyp_file,
+            sessions_file=sessions_file,
             src_file=src_file,
             prompt_jsonl=prompt_jsonl,
             label_spec=label_spec,

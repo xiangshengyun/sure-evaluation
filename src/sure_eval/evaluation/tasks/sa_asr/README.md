@@ -25,3 +25,10 @@ src/sure_eval/evaluation/conversion/sa_asr__cpwer/
 to convert STM to key-text before normalization and normalized key-text back to
 STM before `meeteval.io.load`. This conversion is score-affecting and is part
 of `computation_node_ids`.
+
+The EAR-1 Mandarin route
+`sa_asr.zh.cpcer.conversion_sa_asr_ear1_submission_v1.ear1_norm_v1.ear1_scorer_v1`
+reports character-level `cpcer`. It uses `conversion/sa_asr__ear1_submission`,
+`normalization/ear1_norm` and `scoring/ear1_scorer`. Inputs are the submission
+ZIP (`hyp`), a reference STM directory (`ref`) and organizer `sessions.json`
+(`sessions`).

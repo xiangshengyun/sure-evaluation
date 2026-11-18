@@ -10,3 +10,12 @@ routes:
     executor: sure_eval.evaluation.tasks.sd.pipeline.evaluate_sd_files
     params:
       collar: 0.25
+  -
+    metric: der
+    pipeline_id: sd.any.der.conversion_sd_ear1_submission_v1.ear1_scorer_v1
+    conversions:
+      - sd__ear1_submission
+    nodes:
+      - scoring/ear1_scorer
+    input_contract: scoring/ear1_scorer
+    executor: sure_eval.evaluation.tasks.sd.pipeline.evaluate_sd_ear1_files

@@ -1,0 +1,10 @@
+{
+  "scorer_version": "openbench-integration-0.1",
+  "task": "ESR-ON",
+  "track": "R1",
+  "metric": "cpCER",
+  "score": 0.625,
+  "score_pct": 62.5,
+  "session_count": 2,
+  "counts": {"substitutions": 1, "deletions": 2, "insertions": 2, "reference_characters": 8}
+}

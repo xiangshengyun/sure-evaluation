@@ -1,0 +1,14 @@
+id: sa_asr__ear1_submission
+version: v1
+task: sa_asr
+metric: cpcer
+source_format: ear1_esr_submission_zip
+target_format: seglst
+used_by:
+  - sa_asr.zh.cpcer.conversion_sa_asr_ear1_submission_v1.ear1_norm_v1.ear1_scorer_v1
+scripts:
+  convert: src/sure_eval/evaluation/conversion/sa_asr__ear1_submission/convert.py
+affects_metric: true
+notes:
+  - Validates the submission ZIP against the organizer sessions.json.
+  - Drops rows overlapping organizer exclude intervals or reference rows containing *.

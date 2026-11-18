@@ -1,0 +1,7 @@
+{
+  "track": "R1",
+  "sessions": {
+    "EVAL001": {"duration_s": 9, "exclude": [[7, 8]]},
+    "EVAL002": {"duration_s": 3}
+  }
+}

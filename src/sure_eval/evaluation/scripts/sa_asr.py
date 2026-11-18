@@ -35,8 +35,8 @@ def describe_pipeline(
         contracts=(contract_from_manifest(manifest, route["input_contract"]),),
         task_config_path=manifest_path,
         route_config_path=routes_path,
-        conversion_steps=(conversion_description("sa_asr__cpwer"),),
-        computation_node_ids=("conversion/sa_asr__cpwer", *tuple(route["nodes"])),
+        conversion_steps=(conversion_description(_route_conversion(route)),),
+        computation_node_ids=(f"conversion/{_route_conversion(route)}", *tuple(route["nodes"])),
         execution_metrics=(normalized_metric,),
         script_module=__name__,
         executor=str(route.get("executor") or ""),
@@ -52,10 +52,11 @@ def run(
     language: str = "en",
     pipeline_id: str | None = None,
     collar: float | None = None,
+    sessions_file: str | None = None,
 ):
     if not output_dir:
         raise ValueError("output_dir is required")
-    _, _, _, route, normalized_metric = _select_route(
+    manifest, _, _, route, normalized_metric = _select_route(
         metric=metric,
         language=language,
         pipeline_id=pipeline_id,
@@ -65,13 +66,22 @@ def run(
     params = dict(route.get("params") or {})
     if collar is not None:
         params["collar"] = collar
+    roles = contract_from_manifest(manifest, route["input_contract"]).get("required_roles") or ()
+    if "sessions" in roles:
+        if not sessions_file:
+            raise ValueError(f"Route {route_pipeline_id(route, language=resolved_language)} requires --sessions-file")
+        params["sessions_file"] = sessions_file
+    elif sessions_file:
+        raise ValueError(
+            f"Route {route_pipeline_id(route, language=resolved_language)} does not accept --sessions-file"
+        )
     report = call_route_executor(
         route,
         ref_file=ref_file,
         hyp_file=hyp_file,
         metric=normalized_metric,
         language=resolved_language,
-        conversion_output_dir=str(Path(output_dir) / "conversion" / "sa_asr__cpwer"),
+        conversion_output_dir=str(Path(output_dir) / "conversion" / _route_conversion(route)),
         **params,
     )
     return write_route_run_outputs(report=report, description=description, output_dir=output_dir)
@@ -95,3 +105,8 @@ def _select_route(
 
 def _resolved_language(route: dict, language: str) -> str:
     return str(route.get("language") or language or "en")
+
+
+def _route_conversion(route: dict) -> str:
+    conversions = route.get("conversions") or ("sa_asr__cpwer",)
+    return str(conversions[0])

@@ -18,6 +18,17 @@ input_contracts:
       - STM
       - CTM
       - SegLST
+  scoring/ear1_scorer:
+    purpose: speaker_diarization_error_rate
+    required_roles: [hyp, ref, sessions]
+    row_format: ear1_esd_submission_zip
+    alignment_key: session_id
+    aggregation: pooled_error_seconds_over_reference_speaker_seconds
+    main_report: true
+    supported_input_formats:
+      - "hyp: EAR-1 ESD-ON submission ZIP (submission.rttm, optional empty_sessions.txt)"
+      - "ref: reference RTTM"
+      - "sessions: EAR-1 sessions.json"
 legacy_reference:
   evaluator: sure_eval.evaluation.sure_evaluator.SUREEvaluator
   methods:
@@ -25,3 +36,4 @@ legacy_reference:
 notes:
   - SD delegates annotation parsing to MeetEval and does not assume STM-only input.
   - The collar parameter is part of the route and is recorded in report details.
+  - The EAR-1 route uses the organizer scorer: collar 0, overlap scored, per-session UEM, time pooled over sessions.

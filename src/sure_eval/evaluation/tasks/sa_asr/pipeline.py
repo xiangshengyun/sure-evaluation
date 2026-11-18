@@ -6,11 +6,15 @@ import tempfile
 from pathlib import Path
 
 from sure_eval.evaluation.conversion.sa_asr__cpwer.stm_to_txt import convert_stm_to_txt
+from sure_eval.evaluation.conversion.sa_asr__ear1_submission import CONVERSION_ID as EAR1_CONVERSION_ID
+from sure_eval.evaluation.conversion.sa_asr__ear1_submission import convert_ear1_transcription
 from sure_eval.evaluation.conversion.sa_asr__cpwer.txt_to_stm import convert_txt_to_stm
 from sure_eval.evaluation.core.types import EvaluationFiles, EvaluationReport, MetricInputContract
 from sure_eval.evaluation.core.types import KeyTextFiles, PipelineNodeResult
 from sure_eval.evaluation.nodes.normalization.gstar_norm import normalize_gstar_sa_asr_files
+from sure_eval.evaluation.nodes.normalization.ear1_norm import normalize_ear1_seglst_files
 from sure_eval.evaluation.nodes.normalization.whisper_norm import normalize_whisper_asr_files
+from sure_eval.evaluation.nodes.scoring.ear1_scorer import score_ear1
 from sure_eval.evaluation.nodes.scoring.meeteval import score_meeteval
 from sure_eval.evaluation.pipeline_identity import (
     build_atomic_pipeline_id,
@@ -220,3 +224,77 @@ def _conversion_path(
     if conversion_dir is not None:
         return str(conversion_dir / filename)
     return _new_temp_path(temp_suffix, temp_paths)
+
+
+_SA_ASR_EAR1_CONTRACT = MetricInputContract(
+    metric_id="scoring/ear1_scorer",
+    required_roles=("hyp", "ref", "sessions"),
+    row_format="ear1_esr_submission_zip",
+    alignment_key="session_id",
+    aggregation="pooled_character_errors_over_reference_characters",
+    purpose="speaker_attributed_asr_cpcer",
+)
+
+
+def evaluate_sa_asr_ear1_files(
+    ref_file: str,
+    hyp_file: str,
+    *,
+    sessions_file: str,
+    metric: str = "cpcer",
+    language: str = "zh",
+    distance_backend: str = "builtin",
+    conversion_output_dir: str | None = None,
+) -> EvaluationReport:
+    """Score an EAR-1 ESR-ON submission ZIP with the organizer cpCER rules."""
+
+    if metric.lower() != "cpcer":
+        raise ValueError(f"Unsupported SA-ASR EAR-1 metric: {metric}")
+    if language != "zh":
+        raise ValueError("The EAR-1 cpCER route is defined for language zh")
+    input_files = EvaluationFiles(roles={"ref": ref_file, "hyp": hyp_file, "sessions": sessions_file})
+    _SA_ASR_EAR1_CONTRACT.validate(input_files)
+    components = (
+        conversion_component(EAR1_CONVERSION_ID),
+        node_component("normalization/ear1_norm"),
+        node_component("scoring/ear1_scorer"),
+    )
+    pipeline_id = build_atomic_pipeline_id("sa_asr", language, "cpcer", components)
+    with tempfile.TemporaryDirectory(prefix="sure_sa_asr_ear1_") as temp_dir:
+        work_dir = Path(conversion_output_dir or temp_dir)
+        conversion = convert_ear1_transcription(
+            ref_file=ref_file,
+            hyp_file=hyp_file,
+            sessions_file=sessions_file,
+            output_dir=work_dir,
+        )
+        ref_norm, hyp_norm, norm_result = normalize_ear1_seglst_files(
+            ref_file=conversion.ref_file,
+            hyp_file=conversion.hyp_file,
+            output_dir=work_dir,
+        )
+        result, scoring_result = score_ear1(
+            metric="cpcer",
+            ref_file=ref_norm,
+            hyp_file=hyp_norm,
+            sessions_file=conversion.sessions_file,
+            distance_backend=distance_backend,
+        )
+    return EvaluationReport(
+        task="SA-ASR",
+        language=language,
+        metric="cpcer",
+        score=float(result["score"]),
+        pipeline_id=pipeline_id,
+        pipeline_trace=(norm_result, scoring_result),
+        input_contract=_SA_ASR_EAR1_CONTRACT,
+        input_files=input_files,
+        computation_node_ids=component_trace_ids(components),
+        details={
+            "scoring_result": result,
+            "conversion_trace": [conversion.trace],
+            "input_contract": _SA_ASR_EAR1_CONTRACT.as_dict(),
+            "input_files": input_files.as_dict(),
+            "params": {"distance_backend": distance_backend, "scorer_version": result["scorer_version"]},
+        },
+    )

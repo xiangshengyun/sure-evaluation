@@ -1,0 +1,13 @@
+id: normalization/ear1_norm
+version: v1
+stage: normalization
+language_sensitive: true
+input_schema: seglst
+output_schema: seglst
+implementation: sure_eval.evaluation.nodes.normalization.ear1_norm.node
+internal_stages:
+  - seglst_parse
+  - ear1_text_normalize
+notes:
+  - Uses normalize_text from the EAR-1 organizer scorer (openbench-integration-0.1).
+  - Rows whose text is empty after normalization are dropped.

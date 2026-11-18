@@ -19,6 +19,17 @@ input_contracts:
       - STM
       - CTM
       - SegLST
+  scoring/ear1_scorer:
+    purpose: speaker_attributed_asr_cpcer
+    required_roles: [hyp, ref, sessions]
+    row_format: ear1_esr_submission_zip
+    alignment_key: session_id
+    aggregation: pooled_character_errors_over_reference_characters
+    main_report: true
+    supported_input_formats:
+      - "hyp: EAR-1 ESR-ON submission ZIP (one <session_id>.stm per session)"
+      - "ref: directory with one reference <session_id>.stm per session"
+      - "sessions: EAR-1 sessions.json"
 legacy_reference:
   evaluator: sure_eval.evaluation.sure_evaluator.SUREEvaluator
   methods:
@@ -27,3 +38,4 @@ notes:
   - SA-ASR defaults to cpWER as the main metric and reports DER as a companion metric.
   - English SA-ASR uses Whisper English normalization before MeetEval.
   - Mandarin SA-ASR uses G-STAR-compatible normalization before MeetEval.
+  - cpcer (EAR-1, zh) is character-level and uses the organizer scorer; it is not comparable with cpwer.

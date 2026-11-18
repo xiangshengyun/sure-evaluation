@@ -71,12 +71,22 @@ def test_pipeline_catalog_has_new_kws_and_sa_asr_identities() -> None:
     }
     assert {row["execution_metrics"][0] for row in kws_macro_rows} == {"macro_recall"}
 
-    sa_asr_rows = [row for row in rows if row["task_alias"] == "sa_asr"]
+    sa_asr_rows = [row for row in rows if row["task_alias"] == "sa_asr" and row["metric"] == "cpwer"]
     assert {row["pipeline_id"] for row in sa_asr_rows} == {
         "sa_asr.en.cpwer.conversion_sa_asr_cpwer_v1.whisper_norm_english_v1.meeteval_v1",
         "sa_asr.zh.cpwer.conversion_sa_asr_cpwer_v1.gstar_norm_v1.meeteval_v1",
     }
     assert all(row["computation_node_ids"][0] == "conversion/sa_asr__cpwer" for row in sa_asr_rows)
+
+    cpcer_rows = [row for row in rows if row["task_alias"] == "sa_asr" and row["metric"] == "cpcer"]
+    assert [row["pipeline_id"] for row in cpcer_rows] == [
+        "sa_asr.zh.cpcer.conversion_sa_asr_ear1_submission_v1.ear1_norm_v1.ear1_scorer_v1"
+    ]
+    assert cpcer_rows[0]["computation_node_ids"] == [
+        "conversion/sa_asr__ear1_submission",
+        "normalization/ear1_norm",
+        "scoring/ear1_scorer",
+    ]
 
 
 def test_pipeline_catalog_asr_canonical_rows_use_canonical_public_metrics() -> None:

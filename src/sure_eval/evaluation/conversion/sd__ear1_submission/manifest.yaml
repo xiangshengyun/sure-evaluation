@@ -1,0 +1,14 @@
+id: sd__ear1_submission
+version: v1
+task: sd
+metric: der
+source_format: ear1_esd_submission_zip
+target_format: seglst
+used_by:
+  - sd.any.der.conversion_sd_ear1_submission_v1.ear1_scorer_v1
+scripts:
+  convert: src/sure_eval/evaluation/conversion/sd__ear1_submission/convert.py
+affects_metric: true
+notes:
+  - Validates the submission ZIP and session coverage against the organizer sessions.json.
+  - Projects rows onto the per-session UEM before scoring.

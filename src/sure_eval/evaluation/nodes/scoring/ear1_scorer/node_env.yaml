@@ -1,0 +1,13 @@
+id: scoring/ear1_scorer
+group: ear1
+runtime:
+  type: pip
+  optional: true
+  gpu: false
+packages:
+  - name: scipy
+    version: ">=1.10"
+verify:
+  imports:
+    - scipy
+  files: []

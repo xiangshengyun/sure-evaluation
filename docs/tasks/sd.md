@@ -92,7 +92,7 @@ Inputs:
 
 - `--hyp-file`: submission ZIP with `submission.rttm` at the root and an
   optional `empty_sessions.txt` listing sessions with no speech.
-- `--ref-file`: reference RTTM.
+- `--ref-file`: reference RTTM, or a directory containing `reference.rttm`.
 - `--sessions-file`: organizer `sessions.json`.
 
 ```json
@@ -125,7 +125,7 @@ sure-eval metric describe sd \
   --output sd_ear1.json
 sure-eval metric run --pipeline sd_ear1.json \
   --hyp-file tests/fixtures/ear1/esd/submission.zip \
-  --ref-file tests/fixtures/ear1/esd/reference/reference.rttm \
+  --ref-file tests/fixtures/ear1/esd/reference \
   --sessions-file tests/fixtures/ear1/esd/reference/sessions.json \
   --output-dir sd_ear1 --validate-env
 ```

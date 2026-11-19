@@ -19,12 +19,12 @@ def _expected(example: str) -> dict:
     return json.loads((EAR1 / example / "expected.json").read_text(encoding="utf-8"))
 
 
-def _run_sd(tmp_path, *, hyp=None, sessions=None):
+def _run_sd(tmp_path, *, ref=None, hyp=None, sessions=None):
     pipeline = build_pipeline_spec("sd", pipeline_id=SD_EAR1)
     return run_pipeline_spec(
         pipeline,
         output_dir=str(tmp_path / "out"),
-        ref_file=str(EAR1 / "esd" / "reference" / "reference.rttm"),
+        ref_file=str(ref or EAR1 / "esd" / "reference" / "reference.rttm"),
         hyp_file=str(hyp or EAR1 / "esd" / "submission.zip"),
         sessions_file=str(sessions or EAR1 / "esd" / "reference" / "sessions.json"),
     )
@@ -78,6 +78,23 @@ def test_sd_ear1_route_matches_organizer_scorer(tmp_path):
     assert result == expected
     assert [item["node_id"] for item in report["pipeline_trace"]] == ["scoring/ear1_scorer"]
     assert (tmp_path / "out" / "conversion" / "sd__ear1_submission" / "hyp.seglst.json").is_file()
+
+
+def test_sd_ear1_accepts_reference_directory(tmp_path):
+    expected = _expected("esd")
+    summary = _run_sd(tmp_path, ref=EAR1 / "esd" / "reference")
+    report = _report(tmp_path)
+
+    assert summary["pipeline_id"] == SD_EAR1
+    assert report["details"]["scoring_result"] == expected
+
+
+def test_sd_ear1_reference_directory_requires_reference_rttm(tmp_path):
+    reference_dir = tmp_path / "reference"
+    reference_dir.mkdir()
+
+    with pytest.raises(ValueError, match="reference\\.rttm"):
+        _run_sd(tmp_path, ref=reference_dir)
 
 
 def test_sa_asr_ear1_route_matches_organizer_scorer(tmp_path):

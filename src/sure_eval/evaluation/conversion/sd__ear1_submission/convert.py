@@ -1,4 +1,4 @@
-"""EAR-1 ESD-ON conversion: submission ZIP and reference RTTM to scored SegLST rows.
+"""EAR-1 ESD-ON conversion: submission ZIP and reference RTTM input to scored SegLST rows.
 
 Validates the ZIP and session coverage against ``sessions.json``, then projects
 each session onto its scoring regions (UEM) so the regions form one contiguous
@@ -34,7 +34,7 @@ class Ear1Conversion:
 def convert_ear1_diarization(
     *, ref_file: str, hyp_file: str, sessions_file: str, output_dir: str | Path
 ) -> Ear1Conversion:
-    """Convert an ESD-ON submission ZIP (``hyp_file``) and reference RTTM (``ref_file``)."""
+    """Convert an ESD-ON submission ZIP and reference RTTM file or directory."""
 
     track, sessions = load_sessions(sessions_file)
     ref, hyp = load_diarization_pair(hyp_file, ref_file, sessions)

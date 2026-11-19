@@ -3,7 +3,8 @@
 Converts an EAR-1 ESD-ON submission into SegLST rows for `scoring/ear1_scorer`.
 
 - Input: `hyp` submission ZIP (`submission.rttm`, optional
-  `empty_sessions.txt`), `ref` reference RTTM, `sessions` organizer
+  `empty_sessions.txt`), `ref` reference RTTM file or a directory containing
+  `reference.rttm`, `sessions` organizer
   `sessions.json`.
 - Checks: ZIP members, RTTM fields, session IDs, timestamps within the
   recording, and that every session is covered by rows or an empty

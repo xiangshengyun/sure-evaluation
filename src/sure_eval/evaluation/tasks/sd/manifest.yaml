@@ -27,7 +27,7 @@ input_contracts:
     main_report: true
     supported_input_formats:
       - "hyp: EAR-1 ESD-ON submission ZIP (submission.rttm, optional empty_sessions.txt)"
-      - "ref: reference RTTM"
+      - "ref: reference RTTM file, or directory containing reference.rttm"
       - "sessions: EAR-1 sessions.json"
 legacy_reference:
   evaluator: sure_eval.evaluation.sure_evaluator.SUREEvaluator

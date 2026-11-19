@@ -98,7 +98,11 @@ def read_zip(path, allowed, required):
 
 
 def load_diarization_pair(submission, reference, sessions):
-    """ESD-ON: submission ZIP with ``submission.rttm`` and a merged reference RTTM."""
+    """ESD-ON: submission ZIP and a merged reference RTTM.
+
+    ``reference`` may be the RTTM file itself or a directory containing the
+    conventionally named ``reference.rttm`` file.
+    """
     required = {'submission.rttm'}
     files = read_zip(submission, required | {'empty_sessions.txt'}, required)
     hyp = parse(files['submission.rttm'], 'rttm', sessions, 'submission.rttm')
@@ -106,9 +110,21 @@ def load_diarization_pair(submission, reference, sessions):
     require(len(empty) == len(set(empty)) and not set(empty).intersection(hyp),
             'Duplicate empty-session declaration or session also present in RTTM')
     require(set(hyp) | set(empty) == set(sessions), 'RTTM coverage differs from the expected sessions')
-    reference = Path(reference)
+    reference = _resolve_reference_rttm(reference)
     ref = parse(reference.read_text(encoding='utf-8-sig'), 'rttm', sessions, reference.name)
     return ref, hyp
+
+
+def _resolve_reference_rttm(reference):
+    """Resolve an ESD reference file or a directory containing ``reference.rttm``."""
+    reference = Path(reference)
+    if reference.is_dir():
+        reference = reference / 'reference.rttm'
+    if not reference.is_file():
+        raise ValueError(
+            'EAR-1 ESD reference must be an RTTM file or a directory containing reference.rttm'
+        )
+    return reference
 
 
 def load_transcription_pair(submission, reference_dir, sessions):
